@@ -19,4 +19,4 @@ for character in string.ascii_uppercase:
    for i in range(rnd):
       c = Claptcha(character, "./fonts/"+onlyfiles[random.randint(0, len(onlyfiles)-1)], (80, 80),
              resample=Image.BICUBIC, noise=0.3, margin=(5,5))
-      text, _ = c.write(f'dataset/{c.text}{i:03}.png')
+      text, _ = c.write(f'../dataset/{c.text}{i:03}.png')
