@@ -3,6 +3,7 @@ from imageio import imread
 from os import listdir
 from os.path import isfile, join
 
+from statistics import mean
 import math
 import numpy as np
 
@@ -20,38 +21,24 @@ filters.append(np.ravel(np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])))
 filters.append(np.ravel(np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])))
 
 def get_matrix_data(matrix):
-    # initialize components used
-    morethan_zero = 0
-    zero = 0
-    lessthan_zero = 0
-    mean = 0
-    variance = 0
-    entropy = 0
+    # calculate number of elements using filter function
+    lessthan_zero = len(list(filter(lambda x: x < 0, matrix)))
+    morethan_zero = len(list(filter(lambda x: x > 0, matrix)))
+    zero = len(list(filter(lambda x: x == 0, matrix)))
     result = []
 
-    for element in matrix:
-        if(element < 0):
-            lessthan_zero += 1
-        elif(element == 0):
-            zero += 1
-        elif(element > 0):
-            morethan_zero += 1
-        mean += element
-        entropy += (element * math.log(abs(element)+1))
+    # calculate mean, variance and entropy 
+    # using built-in and numpy functions
+    m = mean(matrix)
+    variance = np.var(matrix, dtype=np.float64)
+    entropy = list(map(lambda x: x*math.log(abs(x)+1), matrix))
+    entropy = -sum(entropy)
 
-    mean = mean/matrix.size
-    entropy *= -1
-
-    for element in matrix:
-        variance += (element-mean)**2
-
-    variance = variance/matrix.size
-
-    # append results on array
+    # append and return array
     result.append(morethan_zero)
     result.append(zero)
     result.append(lessthan_zero)
-    result.append(mean)
+    result.append(m)
     result.append(variance)
     result.append(entropy)
 
