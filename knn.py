@@ -52,10 +52,11 @@ def write_file(file_p, array):
 def train_algorithm():
     # for every dataset file
     for f in files:
+        # get image as an array
+        mat = np.ravel(imread(img_path+f))
+
         # for every filter on the list
         for filt in filters:
-            # get image as an array
-            mat = np.ravel(imread(img_path+f))
             # apply convolution and get data
             conv_mat = np.convolve(mat, filt)
             result_array = get_matrix_data(conv_mat)
