@@ -1,67 +1,102 @@
-from scipy.ndimage import convolve
-from imageio import imread
-from os import listdir
-from os.path import isfile, join
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from imutils import paths
+import numpy as np 
+import argparse
+import imutils
+import cv2
+import os
+import re
+import _pickle as cPickle
 
-from statistics import mean
-import math
-import numpy as np
+def image_to_feature_vector(image, size=(32, 32)):
+    # resize the image to a fixed size, then flatten the image into
+    # a list of raw pixel intensities
+    return cv2.resize(image, size).flatten()
+ 
+# construct the argument parse and parse the arguments
+ap = argparse.ArgumentParser()
+ap.add_argument("-d", "--dataset", default="dataset",
+                help="path to input dataset")
+ap.add_argument("-k", "--neighbors", type=int, default=4,
+                help="# of nearest neighbors for classification")
+ap.add_argument("-j", "--jobs", type=int, default=-1,
+                help="# of jobs for k-NN distance (-1 uses all available cores)")
+args = vars(ap.parse_args())
+ 
+ 
+try:
+    model = cPickle.loads(open("model.cpickle", "rb").read())  # to read model
+    readModel = 1
+except:
+    readModel = 0
+ 
+if readModel:
+    inputPath = 'dataset/'
+    inputPath += input('enter the image path:')
 
-img_path = 'dataset/'
-files = [f for f in listdir(img_path) if isfile(join(img_path, f))]
-filters = []
-fp = open("processed.data", "w+")
+    rawImages = []
 
-filters.append(np.ravel(np.array([[1, 1, 1],[0, 1, 0], [0, 1, 0]])))
-filters.append(np.ravel(np.array([[0, 1, 0],[0, 1, 0],[1, 1, 1]])))
-filters.append(np.ravel(np.array([[1, 0, 1],[1, 0, 1],[1, 1, 1]])))
-filters.append(np.ravel(np.array([[1, 1, 1], [1, 0, 1], [1, 0, 1]])))
-filters.append(np.ravel(np.array([[-1,  0, -1], [0,  4,  0], [-1,  0, -1]])))
-filters.append(np.ravel(np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])))
-filters.append(np.ravel(np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])))
+    image = cv2.imread(inputPath)
 
-def get_matrix_data(matrix):
-    # calculate number of elements using filter function
-    lessthan_zero = len(list(filter(lambda x: x < 0, matrix)))
-    morethan_zero = len(list(filter(lambda x: x > 0, matrix)))
-    zero = len(list(filter(lambda x: x == 0, matrix)))
-    result = []
+    pixels = image_to_feature_vector(image)
 
-    # calculate mean, variance and entropy 
-    # using built-in and numpy functions
-    m = mean(matrix)
-    variance = np.var(matrix, dtype=np.float64)
-    entropy = list(map(lambda x: x*math.log(abs(x)+1), matrix))
-    entropy = -sum(entropy)
+    rawImages.append(pixels)
 
-    # append and return array
-    result.append(morethan_zero)
-    result.append(zero)
-    result.append(lessthan_zero)
-    result.append(m)
-    result.append(variance)
-    result.append(entropy)
+    rawImages = np.array(rawImages)
 
-    return result
-
-def write_file(file_p, array):
-    # write processed image as array on file
-    file_p.write(str(array))
-    file_p.write('\n')
-
-def train_algorithm():
-    # for every dataset file
-    for f in files:
-        # get image as an array
-        mat = np.ravel(imread(img_path+f))
-
-        # for every filter on the list
-        for filt in filters:
-            # apply convolution and get data
-            conv_mat = np.convolve(mat, filt)
-            result_array = get_matrix_data(conv_mat)
-            # write processed file
-            write_file(fp, result_array)
-
-if __name__ == '__main__':
-    train_algorithm()
+    print(model.predict(rawImages))
+else:
+    # grab the list of images that we'll be describing
+    print("[INFO] describing images...")
+    imagePaths = list(paths.list_images(args["dataset"]))
+ 
+    # initialize the raw pixel intensities matrix, the features matrix,
+    # and labels list
+    rawImages = []
+    labels = []
+ 
+    # loop over the input images
+    for (i, imagePath) in enumerate(imagePaths):
+        # load the image and extract the class label (assuming that our
+        # path as the format: /path/to/dataset/{class}.{image_num}.jpg
+        image = cv2.imread(imagePath)
+        label = re.split('(\d+)', imagePath)[0]
+ 
+        # extract raw pixel intensity "features", followed by a color
+        # histogram to characterize the color distribution of the pixels
+        # in the image
+        pixels = image_to_feature_vector(image)
+ 
+        # update the raw images, features, and labels matricies,
+        # respectively
+        rawImages.append(pixels)
+        labels.append(label)
+ 
+        # show an update every 1,000 images
+        if i > 0 and i % 1000 == 0:
+            print("[INFO] processed {}/{}".format(i, len(imagePaths)))
+ 
+    #print(labels)
+ 
+    # show some information on the memory consumed by the raw images
+    # matrix and features matrix
+    rawImages = np.array(rawImages)
+    labels = np.array(labels)
+    print("[INFO] pixels matrix: {:.2f}MB".format(rawImages.nbytes / (1024 * 1000.0)))
+ 
+    # partition the data into training and testing splits, using 75%
+    # of the data for training and the remaining 25% for testing
+    (trainRI, testRI, trainRL, testRL) = train_test_split(
+        rawImages, labels, test_size=0.01, random_state=42)
+ 
+    # train and evaluate a k-NN classifer on the raw pixel intensities
+    print("[INFO] evaluating raw pixel accuracy...")
+    model = KNeighborsClassifier(n_neighbors=args["neighbors"], n_jobs=args["jobs"])
+    model.fit(trainRI, trainRL)
+    acc = model.score(testRI, testRL)
+    print("[INFO] raw pixel accuracy: {:.2f}%".format(acc * 100))
+    
+    f = open("model.cpickle", "wb")
+    f.write(cPickle.dumps(model))
+    f.close()
