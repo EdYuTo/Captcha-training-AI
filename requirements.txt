@@ -2,3 +2,5 @@ scikit-learn
 imutils
 numpy
 opencv-python
+pillow
+claptcha
