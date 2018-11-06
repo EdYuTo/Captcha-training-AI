@@ -18,7 +18,7 @@ def image_to_feature_vector(image, size=(32, 32)):
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--dataset", default="dataset",
                 help="path to input dataset")
-ap.add_argument("-k", "--neighbors", type=int, default=4,
+ap.add_argument("-k", "--neighbors", type=int, default=23,
                 help="# of nearest neighbors for classification")
 ap.add_argument("-j", "--jobs", type=int, default=-1,
                 help="# of jobs for k-NN distance (-1 uses all available cores)")
@@ -26,14 +26,18 @@ args = vars(ap.parse_args())
  
  
 try:
+    print('Trying to import processed data...')
     model = cPickle.loads(open("model.cpickle", "rb").read())  # to read model
     readModel = 1
+    print('Success!')
 except:
+    print('Could not import processed data, processing...')
     readModel = 0
  
 if readModel:
-    inputPath = 'dataset/'
-    inputPath += input('enter the image path:')
+    #inputPath = 'dataset/'
+    #inputPath += input('enter the image path:')
+    inputPath = 'test.png'
 
     rawImages = []
 
@@ -45,7 +49,7 @@ if readModel:
 
     rawImages = np.array(rawImages)
 
-    print(model.predict(rawImages)[0])
+    print('I think this image contains: ' + str(model.predict(rawImages)[0]))
 else:
     # grab the list of images that we'll be describing
     print("[INFO] describing images...")
