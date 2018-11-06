@@ -26,12 +26,12 @@ args = vars(ap.parse_args())
  
  
 try:
-    print('trying to import processed data...')
+    print('Trying to import processed data...')
     model = cPickle.loads(open("model.cpickle", "rb").read())  # to read model
     readModel = 1
-    print('success!')
+    print('Success!')
 except:
-    print('could not import processed data, processing...')
+    print('Could not import processed data, processing...')
     readModel = 0
  
 if readModel:
@@ -49,7 +49,7 @@ if readModel:
 
     rawImages = np.array(rawImages)
 
-    print('i think this image contains: ' + str(model.predict(rawImages)[0]))
+    print('I think this image contains: ' + str(model.predict(rawImages)[0]))
 else:
     # grab the list of images that we'll be describing
     print("[INFO] describing images...")
