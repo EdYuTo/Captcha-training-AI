@@ -45,7 +45,7 @@ if readModel:
 
     rawImages = np.array(rawImages)
 
-    print(model.predict(rawImages))
+    print(model.predict(rawImages)[0])
 else:
     # grab the list of images that we'll be describing
     print("[INFO] describing images...")
@@ -61,7 +61,7 @@ else:
         # load the image and extract the class label (assuming that our
         # path as the format: /path/to/dataset/{class}.{image_num}.jpg
         image = cv2.imread(imagePath)
-        label = re.split('(\d+)', imagePath)[0]
+        label = imagePath[8] #rip hardcode
  
         # extract raw pixel intensity "features", followed by a color
         # histogram to characterize the color distribution of the pixels
