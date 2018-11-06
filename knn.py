@@ -1,9 +1,3 @@
-# To install necessary packages run:
-# $ pip install -U scikit-learn
-# $ pip install imutils
-# $ pip install numpy
-# $ pip install opencv-python
-
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from imutils import paths
@@ -38,7 +32,8 @@ except:
     readModel = 0
  
 if readModel:
-    inputPath = input('enter the image path:')
+    inputPath = 'dataset/'
+    inputPath += input('enter the image path:')
 
     rawImages = []
 
@@ -93,7 +88,7 @@ else:
     # partition the data into training and testing splits, using 75%
     # of the data for training and the remaining 25% for testing
     (trainRI, testRI, trainRL, testRL) = train_test_split(
-        rawImages, labels, test_size=0.25, random_state=42)
+        rawImages, labels, test_size=0.01, random_state=42)
  
     # train and evaluate a k-NN classifer on the raw pixel intensities
     print("[INFO] evaluating raw pixel accuracy...")
