@@ -36,8 +36,8 @@ except:
  
 if readModel:
     #inputPath = 'dataset/'
-    #inputPath += input('enter the image path:')
-    inputPath = 'test.png'
+    inputPath = input('enter the image path:')
+    #inputPath = 'test.png'
 
     rawImages = []
 
