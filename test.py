@@ -62,8 +62,9 @@ if read:
       rawImages.append(pixels)
       rawImages = np.array(rawImages)
 
-      print('\t\t\t\t\tI think this image contains: ' +
-            str(model.predict(rawImages)[0]), end="\r")
+      width = os.get_terminal_size().columns
+      print(str('I think this image contains: ' +
+                str(model.predict(rawImages)[0])).center(width), end="\r")
       
       if str(character) == str(model.predict(rawImages)[0]):
          hit += 1
