@@ -26,17 +26,17 @@ args = vars(ap.parse_args())
  
  
 try:
-    print('Trying to import processed data...')
+    print('[INFO] Trying to import processed data...')
     model = cPickle.loads(open("model.cpickle", "rb").read())  # to read model
     readModel = 1
-    print('Success!')
+    print('[INFO] Success!')
 except:
-    print('Could not import processed data, processing...')
+    print('[INFO] Could not import processed data, processing...')
     readModel = 0
  
 if readModel:
     #inputPath = 'dataset/'
-    inputPath = input('enter the image path:')
+    inputPath = input('[INFO] Enter the image path:')
     #inputPath = 'test.png'
 
     rawImages = []
@@ -49,10 +49,11 @@ if readModel:
 
     rawImages = np.array(rawImages)
 
-    print('I think this image contains: ' + str(model.predict(rawImages)[0]))
+    print('[INFO] I think this image contains: ' +
+          str(model.predict(rawImages)[0]))
 else:
     # grab the list of images that we'll be describing
-    print("[INFO] describing images...")
+    print("[INFO] Describing images...")
     imagePaths = list(paths.list_images(args["dataset"]))
  
     # initialize the raw pixel intensities matrix, the features matrix,
@@ -79,7 +80,7 @@ else:
  
         # show an update every 1,000 images
         if i > 0 and i % 1000 == 0:
-            print("[INFO] processed {}/{}".format(i, len(imagePaths)))
+            print("[INFO] Processed {}/{}".format(i, len(imagePaths)))
  
     #print(labels)
  
@@ -87,7 +88,7 @@ else:
     # matrix and features matrix
     rawImages = np.array(rawImages)
     labels = np.array(labels)
-    print("[INFO] pixels matrix: {:.2f}MB".format(rawImages.nbytes / (1024 * 1000.0)))
+    print("[INFO] Pixels matrix: {:.2f}MB".format(rawImages.nbytes / (1024 * 1000.0)))
  
     # partition the data into training and testing splits, using 75%
     # of the data for training and the remaining 25% for testing
@@ -95,11 +96,11 @@ else:
         rawImages, labels, test_size=0.01, random_state=42)
  
     # train and evaluate a k-NN classifer on the raw pixel intensities
-    print("[INFO] evaluating raw pixel accuracy...")
+    print("[INFO] Evaluating raw pixel accuracy...")
     model = KNeighborsClassifier(n_neighbors=args["neighbors"], n_jobs=args["jobs"])
     model.fit(trainRI, trainRL)
     acc = model.score(testRI, testRL)
-    print("[INFO] raw pixel accuracy: {:.2f}%".format(acc * 100))
+    print("[INFO] Raw pixel accuracy: {:.2f}%".format(acc * 100))
     
     f = open("model.cpickle", "wb")
     f.write(cPickle.dumps(model))

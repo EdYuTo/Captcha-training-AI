@@ -16,26 +16,24 @@ import re
 import _pickle as cPickle
 import time
 
-
 def image_to_feature_vector(image, size=(32, 32)):
     # resize the image to a fixed size, then flatten the image into
     # a list of raw pixel intensities
     return cv2.resize(image, size).flatten()
 
-
 try:
-   print('trying to import processed data...')
+   print('[INFO] Trying to import processed data...')
    model = cPickle.loads(open("model.cpickle", "rb").read())  # to read model
-   print('success!')
+   print('[INFO] Success!')
    read = True
 except:
-   print('could not import processed data.')
+   print('[INFO] Could not import processed data.')
    read = False
 
 if read:
    total = 0
    hit = 0
-   num = int(input('Enter the number of iterations: '))
+   num = int(input('[INPUT] Enter the number of iterations: '))
    os.system('cls' if os.name == 'nt' else 'clear')
 
    charList = []
@@ -63,7 +61,7 @@ if read:
       rawImages = np.array(rawImages)
 
       width = os.get_terminal_size().columns
-      print(str('I think this image contains: ' +
+      print(str('[LOG] I think this image contains: ' +
                 str(model.predict(rawImages)[0])).center(width), end="\r")
       
       if str(character) == str(model.predict(rawImages)[0]):
@@ -72,6 +70,7 @@ if read:
       time.sleep(0.5)
    
    os.system('cls' if os.name == 'nt' else 'clear')
-   print('Tests finished with a precision of: ' + str((hit/total)*100) + "%")
+   print('[INFO] Tests finished with a precision of: ' +
+         str((hit/total)*100) + "%")
 else:
-   print('Run knn.py to generate data...')
+   print('[INFO] Run knn.py to generate data...')
