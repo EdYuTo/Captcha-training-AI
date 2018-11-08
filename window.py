@@ -1,4 +1,5 @@
 from tkinter import *
+import tkinter as tk
 import random
 import string
 from claptcha import Claptcha
@@ -22,18 +23,23 @@ background = '#E1E1E1'
 global InputInformed
 InputInformed = 0
 
+
 def image_to_feature_vector(image, size=(32, 32)):
     return cv2.resize(image, size).flatten()
 
+
 def main_thread():
     try:
-        Console.print_in_prompt('[INFO] Trying to import processed data...')
-        model = cPickle.loads(open("model.cpickle", "rb").read())  # to read model
+        Console.print_in_prompt('[INFO] Trying to import processed model...')
+        model = cPickle.loads(
+            open("model.cpickle", "rb").read())  # to read model
         Console.print_in_prompt('[INFO] Success!')
         read = True
+        time.sleep(1)
     except:
         Console.print_in_prompt('[INFO] Could not import processed data.')
         read = False
+        time.sleep(1)
 
     if read:
         total = 0
@@ -61,7 +67,7 @@ def main_thread():
             #print('Generated image with character: ' + str(character))
 
             c = Claptcha(character, "dataset-generator/fonts/"+onlyfiles[random.randint(0, len(onlyfiles)-1)], (80, 80),
-                        resample=Image.BICUBIC, noise=0.3, margin=(5, 5))
+                         resample=Image.BICUBIC, noise=0.3, margin=(5, 5))
             text, _ = c.write(f'test.png')
 
             image = cv2.imread('test.png')
@@ -71,7 +77,7 @@ def main_thread():
 
             ImageShown.update_img()
             Console.print_in_prompt(str('[LOG] I think this image contains: ' +
-                    str(model.predict(rawImages)[0])))
+                                        str(model.predict(rawImages)[0])))
 
             if str(character) == str(model.predict(rawImages)[0]):
                 hit += 1
@@ -80,13 +86,14 @@ def main_thread():
 
         os.system('cls' if os.name == 'nt' else 'clear')
         Console.print_in_prompt('[INFO] Tests finished with a precision of: ' +
-                str((hit/total)*100) + "%")
+                                str((hit/total)*100) + "%")
     else:
-        Console.print_in_prompt('[INFO] Run knn.py to generate data...')
+        Console.print_in_prompt('[INFO] Try to (re)generate model...')
+
 
 class ImageCaptcha(Frame):
     def __init__(self, master):
-        Frame.__init__(self, master)        
+        Frame.__init__(self, master)
         try:
             self.img = ImageTk.PhotoImage(Image.open('test.png'))
             self.panel = Label(self, image=self.img)
@@ -95,10 +102,11 @@ class ImageCaptcha(Frame):
             self.img = ImageTk.PhotoImage(Image.open('dataset/X000.png'))
             self.panel = Label(self, image=self.img)
             self.panel.pack(fill="both", expand=True)
-    
+
     def update_img(self):
         self.img = ImageTk.PhotoImage(Image.open('test.png'))
         self.panel.configure(image=self.img)
+
 
 class ConsoleIO(Frame):
     def __init__(self, master):
@@ -110,7 +118,7 @@ class ConsoleIO(Frame):
         self.prompt = ""
 
         self.insert_prompt()
-    
+
     def print_in_prompt(self, string):
         self.text.delete('1.0', "end")
         self.text.insert("end", "%s" % string)
@@ -141,19 +149,85 @@ def restart_program():
     InputInformed = 0
     thread.start_new(main_thread, ())
 
+
 def exit():
     window.destroy()
 
+
+def gen_model_thread():
+    Console.print_in_prompt("[INFO] Describing images...")
+    imagePaths = list(paths.list_images("dataset"))
+
+    rawImages = []
+    labels = []
+
+    for (i, imagePath) in enumerate(imagePaths):
+        image = cv2.imread(imagePath)
+        label = imagePath[8]  # rip hardcode
+
+        pixels = image_to_feature_vector(image)
+
+        rawImages.append(pixels)
+        labels.append(label)
+
+        if i > 0 and i % 1000 == 0:
+            Console.print_in_prompt(
+                "[INFO] Processed {}/{}".format(i, len(imagePaths)))
+
+    rawImages = np.array(rawImages)
+    labels = np.array(labels)
+    Console.print_in_prompt("[INFO] Pixels matrix: {:.2f}MB".format(
+        rawImages.nbytes / (1024 * 1000.0)))
+
+    (trainRI, testRI, trainRL, testRL) = train_test_split(
+        rawImages, labels, test_size=0.01, random_state=42)
+
+    Console.print_in_prompt("[INFO] Evaluating raw pixel accuracy...")
+    model = KNeighborsClassifier(n_neighbors=23, n_jobs=-1)
+    model.fit(trainRI, trainRL)
+    acc = model.score(testRI, testRL)
+    Console.print_in_prompt(
+        "[INFO] Raw pixel accuracy: {:.2f}%".format(acc * 100))
+    time.sleep(1)
+
+    Console.print_in_prompt("[INFO] Writing model to a file...")
+    f = open("model.cpickle", "wb")
+    f.write(cPickle.dumps(model))
+    f.close()
+    Console.print_in_prompt("[INFO] All set, just restart the program!")
+
+
+def gen_model():
+    thread.start_new(gen_model_thread, ())
+
+
+def center(win):
+    win.update_idletasks()
+    width = win.winfo_width()
+    frm_width = win.winfo_rootx() - win.winfo_x()
+    win_width = width + 2 * frm_width
+    height = win.winfo_height()
+    titlebar_height = win.winfo_rooty() - win.winfo_y()
+    win_height = height + titlebar_height + frm_width
+    x = win.winfo_screenwidth() // 2 - win_width // 2
+    y = win.winfo_screenheight() // 2 - win_height // 2
+    win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
+    win.deiconify()
+
+
 if __name__ == '__main__':
     window = Tk()
-    window.title('Test Window')
+    window.title('Captcha Training')
     window.geometry("300x150")
     window.configure(background=background)
-    
+
     menu = Menu(window)
+    menu.add_command(label="GenModel", command=gen_model)
     menu.add_command(label="Restart", command=restart_program)
     menu.add_command(label="Exit", command=exit)
     window.config(menu=menu)
+
+    center(window)
 
     ImageShown = ImageCaptcha(window)
     Console = ConsoleIO(window)
