@@ -42,32 +42,40 @@ if read:
 
    for i in range(num):
       total += 1
+      phrase = ""
       #os.system('cls' if os.name == 'nt' else 'clear')
-      rawImages = []
 
       onlyfiles = [f for f in listdir(
           "dataset-generator/fonts") if isfile(join("dataset-generator/fonts", f))]
+      
+      for i in range(random.randint(2, 4)):
+         character = charList[random.randint(0, len(charList)-1)]
+         phrase += str(character)
 
-      character = charList[random.randint(0, len(charList)-1)]
-      #print('Generated image with character: ' + str(character))
-
-      c = Claptcha(character, "dataset-generator/fonts/"+onlyfiles[random.randint(0, len(onlyfiles)-1)], (80, 80),
-                   resample=Image.BICUBIC, noise=0.3, margin=(5, 5))
+      c = Claptcha(phrase, "dataset-generator/fonts/"+onlyfiles[random.randint(0, len(onlyfiles)-1)], (80*len(phrase), 80),
+            resample=Image.BICUBIC, noise=0.3, margin=(5, 5))
       text, _ = c.write(f'test.png')
 
-      image = cv2.imread('test.png')
-      pixels = image_to_feature_vector(image)
-      rawImages.append(pixels)
-      rawImages = np.array(rawImages)
+      img = cv2.imread('test.png')
+      height, width = img.shape[:2]
+      blocks = int(width/80)
+      result = ""
+      for i in range(1, blocks+1):
+         rawImages = []
+         crop_img = img[0:80, 80*(i-1):80*i]
+         pixels = image_to_feature_vector(crop_img)
+         rawImages.append(pixels)
+         rawImages = np.array(rawImages)
+         result += str(model.predict(rawImages)[0])
 
       width = os.get_terminal_size().columns
-      print(str('[LOG] I think this image contains: ' +
-                str(model.predict(rawImages)[0])).center(width), end="\r")
+      print(('[LOG] I think this image contains: ' +
+                result).center(width), end="\r")
       
-      if str(character) == str(model.predict(rawImages)[0]):
+      if phrase == result:
          hit += 1
 
-      time.sleep(0.5)
+      time.sleep(2)
    
    os.system('cls' if os.name == 'nt' else 'clear')
    print('[INFO] Tests finished with a precision of: ' +
