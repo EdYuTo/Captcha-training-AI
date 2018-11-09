@@ -90,8 +90,8 @@ else:
     labels = np.array(labels)
     print("[INFO] Pixels matrix: {:.2f}MB".format(rawImages.nbytes / (1024 * 1000.0)))
  
-    # partition the data into training and testing splits, using 75%
-    # of the data for training and the remaining 25% for testing
+    # partition the data into training and testing splits, using 99%
+    # of the data for training and the remaining 1% for testing
     (trainRI, testRI, trainRL, testRL) = train_test_split(
         rawImages, labels, test_size=0.01, random_state=42)
  
