@@ -22,6 +22,14 @@ import _thread as thread
 background = '#E1E1E1' # window background color
 global InputInformed # global variable to read input number (not best approach)
 InputInformed = 0
+minPixelValue = 200
+# image filters
+#sharpen_kernel = np.array([0,-1,0,-1,5,-1,0,-1,0])
+#edge_kernel = np.array([-1,-1,-1,-1,8,-1,-1,-1,-1])
+blur_kernel = np.array([1,1,1,1,1,1,1,1,1])/9.0
+#edge_detect_kernel = np.array([0, 1, 0, 1, -4, 1, 0, 1, 0])
+#edge_enhance_kernel = np.array([0, 0, 0, -1, 1, 0, 0, 0, 0])
+edge_emboss_kernel = np.array([-2, -1, 0, -1, 1, 1, 0, 1, 2])
 
 
 def image_to_feature_vector(image, size=(32, 32)):
@@ -51,7 +59,6 @@ def main_thread():
         while InputInformed == 0: # wait until input is typed
             time.sleep(1)
         num = InputInformed
-        #print(num) # test input
 
         charList = [] # list of characters that can be used to create a captcha
         charList += string.ascii_uppercase # A-Z
@@ -78,6 +85,12 @@ def main_thread():
             # this is the evaluation part:
             image = cv2.imread('test.png') # loads the captcha
             pixels = image_to_feature_vector(image) # convert the image to an array
+
+            # apply filters
+            pixels = np.convolve(pixels, blur_kernel)
+            pixels = np.convolve(pixels, edge_emboss_kernel)
+            pixels[pixels > minPixelValue] = 255
+
             rawImages.append(pixels) # append the array
             rawImages = np.array(rawImages) # convert to array
 
@@ -93,7 +106,6 @@ def main_thread():
 
             time.sleep(0.5) # read delay
 
-        #os.system('cls' if os.name == 'nt' else 'clear')
         # when all the iterations finish, we display the percentage of correctly evaluated captchas
         Console.print_in_prompt('[INFO] Tests finished with a precision of: ' +
                                 str((hit/total)*100) + "%")
@@ -186,6 +198,11 @@ def gen_model_thread():
 
         # extract raw pixel intensity "features"
         pixels = image_to_feature_vector(image)
+
+        # aplly filters
+        pixels = np.convolve(pixels, blur_kernel)
+        pixels = np.convolve(pixels, edge_emboss_kernel)
+        pixels[pixels > minPixelValue] = 255
 
         # update the raw images and labels matricies, respectively
         rawImages.append(pixels)
