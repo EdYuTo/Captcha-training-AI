@@ -1,5 +1,5 @@
 # Captcha-training-AI
-The main purpose of this project is to test AI learning using a captcha database.
+The main purpose of this project is to test KNN using a captcha database.
 
 Before running install requirements with:
    * pip install -r requirements.txt
