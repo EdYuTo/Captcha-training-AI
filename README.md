@@ -4,7 +4,7 @@ The main purpose of this project is to test KNN using a captcha database.
 ### __Be aware that the training dataset has 250+ mb that will be downloaded when generating the model!__
 
 Before running install requirements with:
-   * pip install -r requirements.txt
+   * `pip install -r requirements.txt`
 
 To run the windowed mode it may be necessary to install tkinter modules
    * use `pacman -S tk` if you are using arch/manjaro
