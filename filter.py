@@ -7,7 +7,6 @@ import time
 def image_to_feature_vector(image, size=(32, 32)):
     return cv2.resize(image, size).flatten()
 
-
 def feature_vector_to_image(image, size=(32, 32, 3)):
     return img.reshape(size)
 
