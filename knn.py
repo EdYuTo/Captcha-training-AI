@@ -8,13 +8,13 @@ import cv2
 import os
 import re
 import _pickle as cPickle
-
+import gdown
+import tarfile
 
 def image_to_feature_vector(image, size=(32, 32)):
     # resize the image to a fixed size, then flatten the image into
     # a list of raw pixel intensities
     return cv2.resize(image, size).flatten()
-
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -61,7 +61,20 @@ else:  # creates a model and writes it
 
     # grab the list of images that we'll be describing
     print("[INFO] Describing images...")
-    imagePaths = list(paths.list_images(args["dataset"]))
+    imagePaths = list(paths.list_images("dataset"))
+    if len(imagePaths) == 0:
+        url = "https://drive.google.com/uc?id=1H8uqq4L81pfEyXT1fb0_R_viKcaV5cW1"
+        output = "dataset.tgz"
+
+        gdown.download(url, output, quiet=False)
+
+        tar = tarfile.open(output, "r:gz")
+        tar.extractall()
+        tar.close()
+
+        os.remove(output)
+
+        imagePaths = list(paths.list_images("dataset"))
 
     # initialize the raw pixel intensities matrix, the features matrix,
     # and labels list
@@ -111,4 +124,3 @@ else:  # creates a model and writes it
     f = open("model.cpickle", "wb")
     f.write(cPickle.dumps(model))
     f.close()
-    

@@ -18,6 +18,8 @@ import re
 import time
 import _pickle as cPickle
 import _thread as thread
+import gdown
+import tarfile
 
 background = '#E1E1E1' # window background color
 global InputInformed # global variable to read input number (not best approach)
@@ -122,7 +124,7 @@ class ImageCaptcha(Frame):
             self.panel = Label(self, image=self.img) # creates its label
             self.panel.pack(fill="both", expand=True) # link the image to its label
         except:
-            self.img = ImageTk.PhotoImage(Image.open('dataset/X000.png')) # loads a placeholder
+            self.img = ImageTk.PhotoImage(Image.open('X000.png')) # loads a placeholder
             self.panel = Label(self, image=self.img) # creates its label
             self.panel.pack(fill="both", expand=True) # link the image to its label
 
@@ -183,7 +185,21 @@ def gen_model_thread():
     Console.print_in_prompt("[INFO] Describing images...")
     # grab the list of images that we'll be describing
     imagePaths = list(paths.list_images("dataset"))
+    if len(imagePaths) == 0:
+        url = "https://drive.google.com/uc?id=1H8uqq4L81pfEyXT1fb0_R_viKcaV5cW1"
+        output = "dataset.tgz"
 
+        gdown.download(url, output, quiet=False)
+
+        tar = tarfile.open(output, "r:gz")
+        tar.extractall()
+        tar.close()
+
+        os.remove(output)
+
+        imagePaths = list(paths.list_images("dataset"))
+
+    imagePaths = list(paths.list_images("dataset"))
     # initialize the raw pixel intensities matrix, the features matrix,
     # and labels list
     rawImages = []
